@@ -2,11 +2,27 @@ import inspect
 from collections import defaultdict
 from time import time
 
-import wrapt
-from debug_toolbar.panels import Panel
-from debug_toolbar.panels.sql.utils import contrasting_color_generator
 import django
 from django.dispatch import Signal
+import wrapt
+
+from debug_toolbar.panels import Panel
+
+try:
+    # DDT <=5
+    from debug_toolbar.panels.sql.utils import contrasting_color_generator
+except Exception:  # pragma: no cover - fallback for DDT >=6 if path changes
+    try:
+        from debug_toolbar.utils import contrasting_color_generator
+    except Exception:
+        def contrasting_color_generator():
+            colors = [
+                '#c0392b', '#8e44ad', '#2980b9', '#16a085',
+                '#f39c12', '#d35400', '#2c3e50', '#7f8c8d',
+            ]
+            while True:
+                for color in colors:
+                    yield color
 
 if django.VERSION < (3, 2):
     from django.utils.translation import ugettext_lazy as _
@@ -61,7 +77,7 @@ class TemplateProfilerPanel(Panel):
     '''
 
     template = 'template_profiler_panel/template.html'
-    scripts = ["static/js/template_profiler.js"]
+    scripts = ["template_profiler_panel/js/template_profiler.js"]
 
     def __init__(self, *args, **kwargs):
         self.colors = {}
@@ -70,8 +86,9 @@ class TemplateProfilerPanel(Panel):
         self.t_min = 0
         self.t_max = 0
         self.total = 0
-        self.monkey_patch_template_classes()
         self.enabled = False
+        self.reset_state()
+        self.monkey_patch_template_classes()
         template_rendered.connect(self.record)
         super(TemplateProfilerPanel, self).__init__(*args, **kwargs)
 
@@ -188,6 +205,7 @@ class TemplateProfilerPanel(Panel):
 
     def enable_instrumentation(self):
         self.enabled = True
+        self.reset_state()
         super(TemplateProfilerPanel, self).enable_instrumentation()
 
     def disable_instrumentation(self):
@@ -247,6 +265,13 @@ class TemplateProfilerPanel(Panel):
         result['max_level'] = max_level
 
         return result
+
+    def reset_state(self):
+        self.colors = {}
+        self.templates = []
+        self.t_min = 0
+        self.t_max = 0
+        self.total = 0
 
     def generate_stats(self, request, response):
         summary = defaultdict(float)

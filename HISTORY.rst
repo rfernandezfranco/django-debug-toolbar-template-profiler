@@ -8,6 +8,7 @@ Pending Release
 
 - Update supported versions to django-debug-toolbar 4.x–6.x and drop Python 2.
 - Refresh tests/settings for Django 3.2+ and the current toolbar APIs.
+- Improve DDT 4–6 compatibility (script static path, color generator import fallback, instrumentation resets).
 
 2.1.0 (2022-06-27)
 ------------------

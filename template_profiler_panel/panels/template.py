@@ -86,7 +86,7 @@ class TemplateProfilerPanel(Panel):
         self.t_min = 0
         self.t_max = 0
         self.total = 0
-        self.enabled = False
+        self._instrumentation_on = False
         self.reset_state()
         self.monkey_patch_template_classes()
         template_rendered.connect(self.record)
@@ -174,7 +174,7 @@ class TemplateProfilerPanel(Panel):
 
     def record(self, instance, start, end, level,
                processing_timeline, **kwargs):
-        if not self.enabled:
+        if not self._instrumentation_on:
             return
 
         template_name = instance.name
@@ -204,12 +204,12 @@ class TemplateProfilerPanel(Panel):
         })
 
     def enable_instrumentation(self):
-        self.enabled = True
+        self._instrumentation_on = True
         self.reset_state()
         super(TemplateProfilerPanel, self).enable_instrumentation()
 
     def disable_instrumentation(self):
-        self.enabled = False
+        self._instrumentation_on = False
         super(TemplateProfilerPanel, self).disable_instrumentation()
 
     def _calc_p(self, part, whole):

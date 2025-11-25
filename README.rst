@@ -9,6 +9,8 @@ An extra panel for
 `django-debug-toolbar <https://django-debug-toolbar.readthedocs.io>`__
 that displays time spent rendering each template.
 
+Tested with django-debug-toolbar 4.x through 6.x on Python 3.8+ and Django 3.2+.
+
 For example:
 
 .. image:: https://raw.githubusercontent.com/node13h/django-debug-toolbar-template-profiler/master/screenshot.png

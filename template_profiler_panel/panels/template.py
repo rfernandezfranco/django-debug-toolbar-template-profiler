@@ -71,7 +71,7 @@ class TemplateProfilerPanel(Panel):
         self.t_max = 0
         self.total = 0
         self.monkey_patch_template_classes()
-        self.is_enabled = False
+        self.enabled = False
         template_rendered.connect(self.record)
         super(TemplateProfilerPanel, self).__init__(*args, **kwargs)
 
@@ -163,11 +163,11 @@ class TemplateProfilerPanel(Panel):
         template_name = instance.name
         # Logic copied from django-debug-toolbar:
         # https://github.com/jazzband/django-debug-toolbar/blob/5d095f66fde8f10b45a93c0b35be0a85762b0458/debug_toolbar/panels/templates/panel.py#L77
+        toolbar_config = getattr(self.toolbar, "config", {})
+        skip_prefixes = tuple(toolbar_config.get("SKIP_TEMPLATE_PREFIXES", ()))
         is_skipped_template = isinstance(template_name, str) and (
             template_name.startswith("debug_toolbar/")
-            or template_name.startswith(
-                tuple(self.toolbar.config["SKIP_TEMPLATE_PREFIXES"])
-            )
+            or template_name.startswith(skip_prefixes)
         )
         if is_skipped_template:
             return
@@ -187,10 +187,12 @@ class TemplateProfilerPanel(Panel):
         })
 
     def enable_instrumentation(self):
-        self.is_enabled = True
+        self.enabled = True
+        super(TemplateProfilerPanel, self).enable_instrumentation()
 
     def disable_instrumentation(self):
-        self.is_enabled = False
+        self.enabled = False
+        super(TemplateProfilerPanel, self).disable_instrumentation()
 
     def _calc_p(self, part, whole):
         # return the percentage of part or 100% if whole is zero
@@ -246,10 +248,10 @@ class TemplateProfilerPanel(Panel):
 
         return result
 
-    def process_request(self, request):
-        response = super(TemplateProfilerPanel, self).process_request(request)
-
+    def generate_stats(self, request, response):
         summary = defaultdict(float)
+        self.t_min = 0
+        self.t_max = 0
 
         # Collect stats
         for template in self.templates:
@@ -275,5 +277,3 @@ class TemplateProfilerPanel(Panel):
         self.record_stats(
             {'templates': sorted(self.templates, key=lambda d: d['start']),
              'summary': sorted(summary.items(), key=lambda t: -t[1])})
-
-        return response

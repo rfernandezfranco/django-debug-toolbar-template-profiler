@@ -6,6 +6,9 @@ Pending Release
 
 .. Insert new release notes below this line
 
+- Update supported versions to django-debug-toolbar 4.x–6.x and drop Python 2.
+- Refresh tests/settings for Django 3.2+ and the current toolbar APIs.
+
 2.1.0 (2022-06-27)
 ------------------
 

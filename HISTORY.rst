@@ -4,12 +4,14 @@ History
 Pending Release
 ---------------
 
-.. Insert new release notes below this line
-
-- Update supported versions to django-debug-toolbar 4.x–6.x and drop Python 2.
-- Refresh tests/settings for Django 3.2+ and the current toolbar APIs.
-- Improve DDT 4–6 compatibility (script static path, color generator import fallback, instrumentation resets).
-- Namespaced static assets under ``template_profiler_panel/`` for toolbar script discovery.
+* Update supported versions to django-debug-toolbar 4.x–6.x and drop Python 2.
+* Refresh tests/settings for Django 3.2+ and the current toolbar APIs.
+* Improve DDT 4–6 compatibility (script static path, color generator import fallback,
+  instrumentation resets).
+* Namespace static assets under ``template_profiler_panel/`` for toolbar script discovery.
+* Harden panel behavior: clear cached node colors between requests, validate the
+  ``profile`` tag argument, and align template classes with current toolbar
+  markup.
 
 2.1.0 (2022-06-27)
 ------------------

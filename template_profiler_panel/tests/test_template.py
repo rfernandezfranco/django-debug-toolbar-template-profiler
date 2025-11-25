@@ -6,11 +6,12 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE',
                       'template_profiler_panel.tests.dummy_settings')
 
 import django
-from django.template import Context, Template
+from django.template import Context, Template, TemplateSyntaxError
 
 django.setup()
 
 from template_profiler_panel.panels.template import TemplateProfilerPanel, template_rendered
+from template_profiler_panel.templatetags.template_profiler import profile
 
 
 class TemplateProfilerPanelTestCase(unittest.TestCase):
@@ -27,6 +28,14 @@ class TemplateProfilerPanelTestCase(unittest.TestCase):
         template_rendered.disconnect(self.template_rendered_receiver)
         self.panel.disable_instrumentation()
         self.panel.templates = []
+
+    def test_reset_state_clears_colors(self):
+        self.panel.colors = {1: "#fff"}
+        from template_profiler_panel.panels import template
+        template.node_element_colors["FooNode"] = "#000"
+        self.panel.reset_state()
+        self.assertEqual(self.panel.colors, {})
+        self.assertEqual(template.node_element_colors, {})
 
     def test_render_wrapped(self):
         self.panel.enable_instrumentation()
@@ -63,3 +72,12 @@ class TemplateProfilerPanelTestCase(unittest.TestCase):
 
     def test_template(self):
         self.assertTrue(self.panel.template)
+
+    def test_profile_tag_requires_argument(self):
+        class DummyToken:
+            contents = "profile"
+
+            def split_contents(self):
+                return self.contents.split()
+        with self.assertRaises(TemplateSyntaxError):
+            profile(MagicMock(), DummyToken())

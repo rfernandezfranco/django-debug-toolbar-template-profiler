@@ -20,7 +20,7 @@
     </thead>
     <tbody>
       {% for template in templates %}
-      <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}" id="profileMain_{{ forloop.counter }}">
+      <tr class="{% cycle 'djdt-row1' 'djdt-row0' %}" id="profileMain_{{ forloop.counter }}">
         <td class="djdt-toggle">
            <button type="button" class="djToggleSwitch" data-toggle-name="profileMain" data-toggle-id="{{ forloop.counter }}">+</button>
         </td>
@@ -38,7 +38,7 @@
         </td>
         <td>{{ template.time|floatformat }}</td>
       </tr>
-      <tr class="djToggleDetails_{{ forloop.counter }} djUnselected" id="sqlDetails_{{ forloop.counter }}">
+      <tr class="djToggleDetails_{{ forloop.counter }} djdt-hidden" id="sqlDetails_{{ forloop.counter }}">
          <td></td>
          <td></td>
          <td></td>
@@ -81,11 +81,10 @@ Depth {{ time_item.level|add:1 }}
   </thead>
   <tbody>
     {% for k, v in summary %}
-    <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
+    <tr class="{% cycle 'djdt-row1' 'djdt-row0' %}">
       <td>{{ k }}</td>
       <td>{{ v|floatformat }}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
-

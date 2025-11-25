@@ -272,6 +272,7 @@ class TemplateProfilerPanel(Panel):
         self.t_min = 0
         self.t_max = 0
         self.total = 0
+        node_element_colors.clear()
 
     def generate_stats(self, request, response):
         summary = defaultdict(float)

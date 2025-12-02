@@ -4,15 +4,15 @@ from time import time
 
 import wrapt
 from debug_toolbar.panels import Panel
-from debug_toolbar.panels.sql.utils import contrasting_color_generator
 import django
+from debug_toolbar.panels.sql.utils import contrasting_color_generator
 from django.dispatch import Signal
 
 if django.VERSION < (3, 2):
     from django.utils.translation import ugettext_lazy as _
 else:
     from django.utils.translation import gettext_lazy as _
-   
+
 if django.VERSION < (3, 1):
     template_rendered = Signal(providing_args=[
         'instance', 'start', 'end', 'level', 'processing_timeline',
@@ -62,6 +62,7 @@ class TemplateProfilerPanel(Panel):
 
     template = 'template_profiler_panel/template.html'
     scripts = ["static/js/template_profiler.js"]
+    export_schema = "debug-toolbar.template-profiler.v1"
 
     def __init__(self, *args, **kwargs):
         self.colors = {}
@@ -192,6 +193,25 @@ class TemplateProfilerPanel(Panel):
     def disable_instrumentation(self):
         self.is_enabled = False
 
+    @classmethod
+    def get_urls(cls):
+        try:
+            from django.urls import path
+        except ImportError:  # Django < 2.0
+            from django.conf.urls import url
+
+            from template_profiler_panel import views
+            return [
+                url(r"^template_export/$", views.template_export,
+                    name="template_export"),
+            ]
+
+        from template_profiler_panel import views
+
+        return [
+            path("template_export/", views.template_export, name="template_export"),
+        ]
+
     def _calc_p(self, part, whole):
         # return the percentage of part or 100% if whole is zero
         return (part / whole) * 100.0 if whole else 100.0
@@ -273,7 +293,89 @@ class TemplateProfilerPanel(Panel):
         self.total = len(self.templates)
 
         self.record_stats(
-            {'templates': sorted(self.templates, key=lambda d: d['start']),
-             'summary': sorted(summary.items(), key=lambda t: -t[1])})
+            {
+                'templates': sorted(self.templates, key=lambda d: d['start']),
+                'summary': sorted(summary.items(), key=lambda t: -t[1]),
+                'request_id': getattr(self.toolbar, 'request_id', None),
+            })
 
         return response
+
+    def _format_processing_nodes(self, processing_timeline):
+        nodes = []
+        for time_item in processing_timeline:
+            position = time_item.get('position')
+            if position:
+                try:
+                    position = list(position)
+                except TypeError:
+                    position = [position]
+            nodes.append({
+                'name': self._stringify(time_item.get('name')),
+                'level': time_item.get('level', 0),
+                'relative_start_ms': time_item.get('relative_start', 0),
+                'relative_end_ms': time_item.get('relative_end', 0),
+                'duration_ms': time_item.get('duration', 0),
+                'offset_pct': time_item.get('offset_p', 0),
+                'duration_pct': time_item.get('rel_duration_p', 0),
+                'template_position': position,
+            })
+        return nodes
+
+    def _format_template_for_export(self, template):
+        timeline = {
+            'offset_start_pct': template.get('offset_p', 0),
+            'duration_pct': template.get('duration_p', 0),
+            'relative_duration_pct': template.get('rel_duration_p', 0),
+        }
+        return {
+            'name': self._stringify(template.get('name')),
+            'duration_ms': template.get('time', 0),
+            'stack_level': template.get('level', 0),
+            'relative_start_ms': template.get('relative_start', 0),
+            'relative_end_ms': template.get('relative_end', 0),
+            'timeline': timeline,
+            'nodes': self._format_processing_nodes(
+                template.get('processing_timeline', [])),
+        }
+
+    @staticmethod
+    def _stringify(value):
+        if value is None:
+            return None
+        return value if isinstance(value, str) else str(value)
+
+    def get_export_data(self):
+        stats = self.get_stats()
+
+        templates = [
+            self._format_template_for_export(template)
+            for template in stats.get('templates', [])
+        ]
+        by_template = [
+            {'name': self._stringify(name), 'total_time_ms': duration}
+            for name, duration in stats.get('summary', [])
+        ]
+
+        render_window_ms = None
+        if templates:
+            start_min = min(
+                template.get('relative_start_ms', 0) or 0 for template in templates)
+            end_max = max(
+                template.get('relative_end_ms', 0) or 0 for template in templates)
+            render_window_ms = end_max - start_min
+
+        return {
+            'schema': self.export_schema,
+            'meta': {
+                'request_id': stats.get('request_id'),
+                'render_window_ms': render_window_ms,
+            },
+            'summary': {
+                'render_calls': len(templates),
+                'total_render_time_ms': sum(
+                    template.get('duration_ms', 0) or 0 for template in templates),
+            },
+            'templates': templates,
+            'by_template': by_template,
+        }

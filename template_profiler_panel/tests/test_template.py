@@ -65,8 +65,51 @@ class TemplateProfilerPanelTestCase(unittest.TestCase):
     def test_template(self):
         self.assertTrue(self.panel.template)
 
+    def test_get_export_data(self):
+        class DummyNode(object):
+            def __str__(self):
+                return "dummy_node"
+
+        self.panel.get_stats = MagicMock(return_value={
+            'request_id': 'req-1',
+            'templates': [{
+                'name': 'base.html',
+                'time': 12.5,
+                'level': 2,
+                'relative_start': 0.0,
+                'relative_end': 12.5,
+                'offset_p': 0.0,
+                'duration_p': 100.0,
+                'rel_duration_p': 100.0,
+                'processing_timeline': [{
+                    'name': DummyNode(),
+                    'relative_start': 0.0,
+                    'relative_end': 6.25,
+                    'duration': 6.25,
+                    'offset_p': 0.0,
+                    'rel_duration_p': 50.0,
+                    'position': (1, 5),
+                    'level': 0,
+                }],
+            }],
+            'summary': [('base.html', 12.5)],
+        })
+
+        payload = self.panel.get_export_data()
+
+        self.assertEqual(payload['schema'], self.panel.export_schema)
+        self.assertEqual(payload['meta']['request_id'], 'req-1')
+        self.assertEqual(payload['meta']['render_window_ms'], 12.5)
+        self.assertEqual(payload['summary']['render_calls'], 1)
+        self.assertEqual(payload['summary']['total_render_time_ms'], 12.5)
+        self.assertEqual(payload['by_template'][0]['name'], 'base.html')
+        template = payload['templates'][0]
+        self.assertEqual(template['name'], 'base.html')
+        self.assertEqual(template['timeline']['duration_pct'], 100.0)
+        self.assertEqual(template['nodes'][0]['name'], 'dummy_node')
+        self.assertEqual(template['nodes'][0]['template_position'], [1, 5])
+
 
 if __name__ == '__main__':
     application = get_wsgi_application()
     unittest.main()
-

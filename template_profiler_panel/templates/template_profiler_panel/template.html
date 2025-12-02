@@ -1,5 +1,12 @@
 {% load i18n %}
 <h4>{{ templates|length }} {% trans 'calls to Template.render()' %}</h4>
+{% if request_id %}
+  <form class="djDebugTemplateExport" method="get" action="{% url 'djdt:template_export' %}">
+    <input type="hidden" name="request_id" value="{{ request_id }}">
+    <button type="submit" formtarget="_blank">{% trans "Export templates as JSON" %}</button>
+    <span class="djDebugTemplateExportHint">{% trans "Opens a machine-friendly snapshot of these render calls." %}</span>
+  </form>
+{% endif %}
 <div>
   <table>
     <colgroup>
@@ -88,4 +95,3 @@ Depth {{ time_item.level|add:1 }}
     {% endfor %}
   </tbody>
 </table>
-

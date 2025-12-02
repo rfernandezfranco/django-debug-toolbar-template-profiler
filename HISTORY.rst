@@ -6,6 +6,9 @@ Pending Release
 
 .. Insert new release notes below this line
 
+* Added JSON export for the Template Profiler panel to download machine-friendly
+  snapshots of render calls.
+
 2.1.0 (2022-06-27)
 ------------------
 

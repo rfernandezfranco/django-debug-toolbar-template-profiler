@@ -53,3 +53,11 @@ end:
 
 After this, you should see the "Template Profiler" panel when you load the
 toolbar. Both Django and Jinja2 template ``render()`` calls will be measured.
+
+Exporting JSON
+==============
+
+Click "Export templates as JSON" in the panel to download a machine-friendly
+snapshot of the render calls and their node timelines. The export is available
+at ``/__debug__/template_export/?request_id=<id>`` and is shaped for automated
+analysis tools and LLMs.

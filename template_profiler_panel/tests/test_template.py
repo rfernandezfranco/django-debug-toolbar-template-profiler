@@ -65,8 +65,13 @@ class TemplateProfilerPanelTestCase(unittest.TestCase):
     def test_template(self):
         self.assertTrue(self.panel.template)
 
+    def test_scripts_path(self):
+        self.assertEqual(
+            TemplateProfilerPanel.scripts,
+            ["template_profiler_panel/js/template_profiler.js"],
+        )
+
 
 if __name__ == '__main__':
     application = get_wsgi_application()
     unittest.main()
-
